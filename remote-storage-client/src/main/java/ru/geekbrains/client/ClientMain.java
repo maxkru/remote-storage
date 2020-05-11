@@ -53,6 +53,8 @@ public class ClientMain {
                     System.out.print(" " + respSplit[i]);
                 }
                 System.out.println();
+            } else {
+                System.out.println(resp);
             }
         }
     }

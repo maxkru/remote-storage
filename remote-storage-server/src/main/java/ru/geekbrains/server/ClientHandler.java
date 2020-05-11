@@ -2,6 +2,11 @@ package ru.geekbrains.server;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ClientHandler {
     private Server server;
@@ -24,23 +29,27 @@ public class ClientHandler {
                         System.out.println(str);
                         if (str.startsWith("FETCH ")) {
                             String fileName = str.split(" ")[1]; // TODO: improve regex
-                            File file = new File(fileName);
-                            if (!file.exists()) {
+                            Path path = Paths.get(fileName);
+                            if (Files.notExists(path)) {
                                 sendMsg("FETCH-RESP NOT-FOUND");
                             } else {
+                                File file = path.toFile();
                                 sendMsg("FETCH-RESP OK " + file.length());
                                 sendFile(file);
                             }
-                        }
+                        } else if (str.equals("LIST")) {
+                            Path folder = Paths.get(".");
+                            List<Path> files = Files.list(folder)
+                                    .filter(Files::isRegularFile)
+                                    .collect(Collectors.toList());
 
-                        if (str.equals("LIST")) {
-                            File file = new File("/"); // TODO: получить содержимое папки
-                            File[] files = file.listFiles();
-                            StringBuilder sb = new StringBuilder("LIST-RESP");
-                            for (File f : files) {
-                                sb.append(" ").append(f.getName());
+                            StringBuilder sb = new StringBuilder("LIST-RESP\n");
+                            for (Path f : files) {
+                                sb.append(f.getFileName()).append("\n");
                             }
                             sendMsg(sb.toString());
+                        } else {
+                            sendMsg("SYNTAX-ERROR");
                         }
                     }
                 } catch (IOException e) {
