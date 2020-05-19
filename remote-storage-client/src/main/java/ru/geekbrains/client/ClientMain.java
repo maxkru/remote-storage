@@ -22,11 +22,30 @@ public class ClientMain {
         while (true) {
             System.out.print("> ");
             line = scanner.nextLine();
+
+            File storedFile = null;
             if (line.isEmpty()) {
                 System.out.println("Bye");
                 break;
+            } else if (line.startsWith("STORE ")) {
+                storedFile = new File(line.split(" ")[1]);
+                if (!storedFile.exists()) {
+                    System.out.println("No such file - " + storedFile.getName());
+                    continue;
+                }
+                out.writeUTF(line + " " + storedFile.length());
+                System.out.print("Sending file " + storedFile.getName() + "...");
+                FileInputStream fileInputStream = new FileInputStream(storedFile);
+                byte[] buffer = new byte[BUFFER_SIZE];
+                int dataSize;
+                while ((dataSize = fileInputStream.read(buffer)) != -1) {
+                    out.write(buffer, 0, dataSize);
+                }
+                System.out.println("Complete.");
             }
             out.writeUTF(line);
+
+
             String resp = in.readUTF();
             if (resp.startsWith("FETCH-RESP ")) {
                 String[] respSplit = resp.split(" ");
@@ -49,10 +68,16 @@ public class ClientMain {
             } else if (resp.startsWith("LIST-RESP ")) {
                 String[] respSplit = resp.split(" "); // TODO: подобрать regex для выделения имён файлов из выражения вида 'LIST-RESP "file 1.txt" "file 2.txt"'
                 System.out.print("File list:");
-                for(int i = 1; i < respSplit.length; i++) {
+                for (int i = 1; i < respSplit.length; i++) {
                     System.out.print(" " + respSplit[i]);
                 }
                 System.out.println();
+            } else if (resp.startsWith("STORE-RESP ")) {
+                if (storedFile == null) {
+                    System.out.println("Received uncalled STORE-RESP from server.");
+                    continue;
+                }
+
             } else {
                 System.out.println(resp);
             }

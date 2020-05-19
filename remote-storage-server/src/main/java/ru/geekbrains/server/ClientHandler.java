@@ -48,6 +48,19 @@ public class ClientHandler {
                                 sb.append(f.getFileName()).append("\n");
                             }
                             sendMsg(sb.toString());
+                        } else if (str.startsWith("STORE ")) {
+                            String[] strSplit = str.split(" ");
+                            String fileName = strSplit[1];
+                            long fileLength;
+                            try {
+                                fileLength = Long.parseLong(strSplit[2]);
+                            } catch (NumberFormatException e) {
+                                System.err.println("Error parsing command: " + str);
+                                sendMsg("SYNTAX-ERROR");
+                                continue;
+                            }
+                            receiveFile(fileLength);
+                            sendMsg("STORE-RESP OK");
                         } else {
                             sendMsg("SYNTAX-ERROR");
                         }
@@ -90,8 +103,25 @@ public class ClientHandler {
             FileInputStream fileInputStream = new FileInputStream(file);
             byte[] buffer = new byte[TRANSFER_BUFFER_SIZE];
             int nRead;
-            while ((nRead = fileInputStream.read(buffer, 0, TRANSFER_BUFFER_SIZE)) >= 0) {
+            while ((nRead = fileInputStream.read(buffer)) != -1) {
                 out.write(buffer, 0, nRead);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static final int BUFFER_SIZE = 1024;
+
+    public void receiveFile(long length) {
+        try {
+            File file = new File("sent.txt");
+            FileOutputStream fileOutputStream = new FileOutputStream(file, false);
+            byte[] buffer = new byte[BUFFER_SIZE];
+            while (length > 0) {
+                in.read(buffer);
+                fileOutputStream.write(buffer, 0, (length > BUFFER_SIZE) ? BUFFER_SIZE : (int) length);
+                length -= BUFFER_SIZE;
             }
         } catch (IOException e) {
             e.printStackTrace();
