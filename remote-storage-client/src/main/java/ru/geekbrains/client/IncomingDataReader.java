@@ -1,0 +1,64 @@
+package ru.geekbrains.client;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import ru.geekbrains.common.Protocol;
+
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.stream.Collectors;
+
+public class IncomingDataReader extends ChannelInboundHandlerAdapter {
+
+    private Queue<String> commandQueue;
+    private ByteBuf dataBuf;
+
+    public IncomingDataReader() {
+        commandQueue = new LinkedList<>();
+        dataBuf = ByteBufAllocator.DEFAULT.buffer(1024 * 1024 * 8);
+    }
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        ByteBuf in = (ByteBuf) msg;
+        try {
+            while (in.isReadable()) {
+                byte firstByte = in.readByte();
+                if (firstByte == Protocol.COMMAND_SIGNAL_BYTE) {
+                    int commandByteLength = in.readInt();
+                    if (in.isReadable(commandByteLength)) {
+                        String command = in.readCharSequence(commandByteLength, StandardCharsets.UTF_8).toString();
+                        commandQueue.add(command);
+                    }
+                } else if (firstByte == Protocol.DATA_SIGNAL_BYTE) {
+                    while (in.isReadable()) {
+                        dataBuf.writeBytes(in);
+                    }
+                }
+            }
+        } finally {
+            in.release();
+        }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        ctx.close();
+    }
+
+    public void getData(byte[] arr, int length) {
+        dataBuf.readBytes(arr, 0, length);
+    }
+
+    public String getMsg() {
+        return commandQueue.remove();
+    }
+}

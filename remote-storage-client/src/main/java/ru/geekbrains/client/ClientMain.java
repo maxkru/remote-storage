@@ -1,21 +1,39 @@
 package ru.geekbrains.client;
 
-import java.io.*;
-import java.math.BigDecimal;
-import java.net.Socket;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.Channel;
+import io.netty.channel.DefaultFileRegion;
+import io.netty.channel.FileRegion;
+import ru.geekbrains.common.Protocol;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
+import java.util.concurrent.CountDownLatch;
 
 public class ClientMain {
 
     static final String SERVER_IP_ADDRESS = "localhost";
     static final int SERVER_PORT = 8189;
 
-    private static final int BUFFER_SIZE = 1024;
+    static final int BUFFER_SIZE = 1024;
 
-    public static void main(String[] args) throws IOException {
-        Socket socket = new Socket(SERVER_IP_ADDRESS, SERVER_PORT);
-        DataInputStream in = new DataInputStream(socket.getInputStream());
-        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+    private static NetworkHandler networkHandler = NetworkHandler.getInstance();
+
+    public static void main(String[] args) throws Throwable {
+        IncomingDataReader reader = new IncomingDataReader();
+        CountDownLatch latch = new CountDownLatch(1);
+        new Thread(() -> {
+            try {
+                networkHandler.launch(latch, SERVER_IP_ADDRESS, SERVER_PORT, reader);
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        }).start();
+        latch.await();
+
 
         Scanner scanner = new Scanner(System.in);
         String line;
@@ -28,45 +46,42 @@ public class ClientMain {
                 System.out.println("Bye");
                 break;
             } else if (line.startsWith("STORE ")) {
-                storedFile = new File(line.split(" ")[1]);
+                storedFile = new File("local/" + line.split(" ")[1]);
                 if (!storedFile.exists()) {
                     System.out.println("No such file - " + storedFile.getName());
                     continue;
                 }
-                out.writeUTF(line + " " + storedFile.length());
+                sendMsg(line + " " + storedFile.length());
                 System.out.print("Sending file " + storedFile.getName() + "...");
-                FileInputStream fileInputStream = new FileInputStream(storedFile);
-                byte[] buffer = new byte[BUFFER_SIZE];
-                int dataSize;
-                while ((dataSize = fileInputStream.read(buffer)) != -1) {
-                    out.write(buffer, 0, dataSize);
-                }
+                sendFile(storedFile);
                 System.out.println("Complete.");
+                continue;
             }
-            out.writeUTF(line);
+            sendMsg(line);
 
+            Thread.sleep(1000);
 
-            String resp = in.readUTF();
+            String resp = reader.getMsg();
             if (resp.startsWith("FETCH-RESP ")) {
                 String[] respSplit = resp.split(" ");
                 if (respSplit[1].equals("NOT-FOUND")) {
                     System.out.println("File not found.");
                     continue;
                 }
-                long fileSize = Long.parseLong(respSplit[2]);
+                long fileSize = Long.parseLong(respSplit[3]);
                 System.out.print("Receiving file, " + fileSize + " bytes... ");
-                File file = new File("received.txt");
+                File file = new File("local/" + respSplit[2]);
                 FileOutputStream fileOutputStream = new FileOutputStream(file, false);
                 byte[] buffer = new byte[BUFFER_SIZE];
                 while (fileSize > 0) {
-                    in.read(buffer);
+                    reader.getData(buffer, (fileSize > BUFFER_SIZE) ? BUFFER_SIZE : (int) fileSize);
                     fileOutputStream.write(buffer, 0, (fileSize > BUFFER_SIZE) ? BUFFER_SIZE : (int) fileSize);
                     fileSize -= BUFFER_SIZE;
                 }
                 System.out.println("Complete.");
 
             } else if (resp.startsWith("LIST-RESP ")) {
-                String[] respSplit = resp.split(" "); // TODO: подобрать regex для выделения имён файлов из выражения вида 'LIST-RESP "file 1.txt" "file 2.txt"'
+                String[] respSplit = resp.split("\n");
                 System.out.print("File list:");
                 for (int i = 1; i < respSplit.length; i++) {
                     System.out.print(" " + respSplit[i]);
@@ -77,11 +92,40 @@ public class ClientMain {
                     System.out.println("Received uncalled STORE-RESP from server.");
                     continue;
                 }
-
             } else {
                 System.out.println(resp);
             }
         }
+    }
+
+    public static void sendFile(File file) {
+        FileRegion region = new DefaultFileRegion(file, 0, file.length());
+        Channel channel = networkHandler.getChannel();
+
+        ByteBuf byteBuf;
+
+        byteBuf = ByteBufAllocator.DEFAULT.directBuffer(1 + 8);
+        byteBuf.writeByte(Protocol.DATA_SIGNAL_BYTE);
+
+        byteBuf.writeLong(file.length());
+        channel.write(byteBuf);
+
+        channel.flush();
+
+        channel.writeAndFlush(region);
+    }
+
+    public static void sendMsg(String msg) {
+        Channel channel = networkHandler.getChannel();
+        ByteBuf byteBuf;
+
+        byte[] msgBytes = msg.getBytes(StandardCharsets.UTF_8);
+
+        byteBuf = ByteBufAllocator.DEFAULT.directBuffer(1 + 4 + msgBytes.length);
+        byteBuf.writeByte(Protocol.COMMAND_SIGNAL_BYTE);
+        byteBuf.writeInt(msgBytes.length);
+        byteBuf.writeBytes(msgBytes);
+        channel.writeAndFlush(byteBuf);
     }
 
 }
