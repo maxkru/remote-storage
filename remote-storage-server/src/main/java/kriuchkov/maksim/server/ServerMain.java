@@ -1,4 +1,4 @@
-package ru.geekbrains.server;
+package kriuchkov.maksim.server;
 
 public class ServerMain {
 

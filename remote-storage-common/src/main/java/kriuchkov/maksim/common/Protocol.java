@@ -1,4 +1,4 @@
-package ru.geekbrains.common;
+package kriuchkov.maksim.common;
 
 public class Protocol {
     public static final byte COMMAND_SIGNAL_BYTE = 1;

@@ -1,9 +1,9 @@
-package ru.geekbrains.server;
+package kriuchkov.maksim.server;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
-import ru.geekbrains.common.Protocol;
+import kriuchkov.maksim.common.Protocol;
 
 import java.io.File;
 

@@ -1,20 +1,14 @@
-package ru.geekbrains.client;
+package kriuchkov.maksim.client;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import ru.geekbrains.common.Protocol;
+import kriuchkov.maksim.common.Protocol;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
-import java.util.stream.Collectors;
 
 public class IncomingDataReader extends ChannelInboundHandlerAdapter {
 
