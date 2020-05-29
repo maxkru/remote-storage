@@ -1,25 +1,17 @@
-package ru.geekbrains.server;
+package kriuchkov.maksim.server;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.DefaultFileRegion;
-import io.netty.channel.FileRegion;
-import ru.geekbrains.common.Protocol;
+import kriuchkov.maksim.common.Protocol;
 
 import java.io.*;
-import java.net.Socket;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static ru.geekbrains.server.CommandService.sendMsg;
-import static ru.geekbrains.server.FileService.receiveFile;
-import static ru.geekbrains.server.FileService.sendFile;
 
 public class ClientHandler extends ChannelInboundHandlerAdapter {
 
@@ -57,9 +49,9 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                             case "AUTH":
                                 if (split.length == 2) {
                                     username = split[1];
-                                    sendMsg("AUTH-RESP OK", ctx.channel());
+                                    CommandService.sendMsg("AUTH-RESP OK", ctx.channel());
                                 } else {
-                                    sendMsg("SYNTAX-ERROR", ctx.channel());
+                                    CommandService.sendMsg("SYNTAX-ERROR", ctx.channel());
                                 }
                                 break;
                             case "LIST":
@@ -70,18 +62,18 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                                 StringBuilder sb = new StringBuilder("LIST-RESP\n");
                                 for (Path f : files)
                                     sb.append(f.getFileName()).append("\n");
-                                sendMsg(sb.toString(), ctx.channel());
+                                CommandService.sendMsg(sb.toString(), ctx.channel());
                                 break;
 
                             case "FETCH":
                                 String filenameFetch = input.split(" ", 2)[1];
                                 Path pathFetch = Paths.get("remote", filenameFetch);
                                 if (Files.notExists(pathFetch)) {
-                                    sendMsg("FETCH-RESP NOT-FOUND", ctx.channel());
+                                    CommandService.sendMsg("FETCH-RESP NOT-FOUND", ctx.channel());
                                 } else {
                                     File file = pathFetch.toFile();
-                                    sendMsg("FETCH-RESP OK " + file.length(), ctx.channel());
-                                    sendFile(file, ctx.channel(), null);
+                                    CommandService.sendMsg("FETCH-RESP OK " + file.length(), ctx.channel());
+                                    FileService.sendFile(file, ctx.channel(), null);
                                 }
                                 break;
 
@@ -92,11 +84,11 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                                     fileLength = Long.parseLong(split[2]);
                                 } catch (NumberFormatException e) {
                                     System.err.println("Error parsing command: " + input);
-                                    sendMsg("SYNTAX-ERROR", ctx.channel());
+                                    CommandService.sendMsg("SYNTAX-ERROR", ctx.channel());
                                     break;
                                 }
-                                receiveFile(filenameStore, fileLength);
-                                sendMsg("STORE-RESP OK", ctx.channel());
+                                FileService.receiveFile(filenameStore, fileLength);
+                                CommandService.sendMsg("STORE-RESP OK", ctx.channel());
                                 state = State.AWAITING_DATA;
                                 break;
 
@@ -104,10 +96,10 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                                 String filenameRemove = input.split(" ", 2)[1];
                                 Path pathRemove = Paths.get(filenameRemove);
                                 if (Files.notExists(pathRemove)) {
-                                    sendMsg("REMOVE-RESP NOT-FOUND", ctx.channel());
+                                    CommandService.sendMsg("REMOVE-RESP NOT-FOUND", ctx.channel());
                                 } else {
                                     Files.delete(pathRemove);
-                                    sendMsg("REMOVE-RESP OK", ctx.channel());
+                                    CommandService.sendMsg("REMOVE-RESP OK", ctx.channel());
                                 }
                                 break;
                         }

@@ -1,4 +1,4 @@
-package ru.geekbrains.client;
+package kriuchkov.maksim.client;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;

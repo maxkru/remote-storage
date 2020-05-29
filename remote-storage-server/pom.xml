@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>remote-storage</artifactId>
-        <groupId>ru.geekbrains</groupId>
+        <groupId>kriuchkov.maksim</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,7 +41,7 @@
             <version>2.13.3</version>
         </dependency>
         <dependency>
-            <groupId>ru.geekbrains</groupId>
+            <groupId>kriuchkov.maksim</groupId>
             <artifactId>remote-storage-common</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>

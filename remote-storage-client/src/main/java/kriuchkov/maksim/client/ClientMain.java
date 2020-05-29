@@ -1,11 +1,11 @@
-package ru.geekbrains.client;
+package kriuchkov.maksim.client;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
-import ru.geekbrains.common.Protocol;
+import kriuchkov.maksim.common.Protocol;
 
 import java.io.File;
 import java.io.FileOutputStream;
