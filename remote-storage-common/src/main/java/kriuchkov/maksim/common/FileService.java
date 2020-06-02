@@ -59,6 +59,8 @@ public class FileService implements Closeable {
             throw new RuntimeException("Unexpected data block.");
 
         int l = data.readableBytes();
+        if (l > length)
+            throw new RuntimeException("More data in block than expected.");
         data.readBytes(buffer, 0, l);
         fos.write(buffer, 0, l);
         fos.flush();

@@ -27,9 +27,9 @@ public class ServerCommandService extends CommandService {
             case "AUTH":
                 if (split.length == 2) {
 //                    username = split[1];
-                    ServerCommandService.sendMsg("AUTH-RESP OK", channel);
+                    sendMsg("AUTH-RESP OK", channel);
                 } else {
-                    ServerCommandService.sendMsg("SYNTAX-ERROR", channel);
+                    sendMsg("SYNTAX-ERROR", channel);
                 }
                 break;
             case "LIST":
@@ -40,7 +40,7 @@ public class ServerCommandService extends CommandService {
                 StringBuilder sb = new StringBuilder("LIST-RESP\n");
                 for (Path f : files)
                     sb.append(f.getFileName()).append("\n");
-                ServerCommandService.sendMsg(sb.toString(), channel);
+                sendMsg(sb.toString(), channel);
                 break;
 
             case "FETCH":
