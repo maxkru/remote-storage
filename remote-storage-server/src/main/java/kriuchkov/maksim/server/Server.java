@@ -7,6 +7,10 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import kriuchkov.maksim.common.MessageTypeDecoder;
+import kriuchkov.maksim.common.OutboundMessageSplitter;
+import kriuchkov.maksim.common.Protocol;
 
 public class Server {
 
@@ -24,7 +28,13 @@ public class Server {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            socketChannel.pipeline().addLast(new ClientHandler());
+                            // out
+                            socketChannel.pipeline().addLast(new OutboundMessageSplitter());
+
+                            // in
+                            socketChannel.pipeline().addLast(new LengthFieldBasedFrameDecoder(Protocol.MAX_FRAME_BODY_LENGTH, 1, 4));
+                            socketChannel.pipeline().addLast(new MessageTypeDecoder());
+                            socketChannel.pipeline().addLast(new FinalHandler());
                         }
                     });
             ChannelFuture future = bootstrap.bind(port).sync();
