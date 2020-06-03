@@ -65,7 +65,8 @@ public class ServerCommandService extends CommandService {
                     ServerCommandService.sendMsg("SYNTAX-ERROR", channel);
                     break;
                 }
-                fileService.setDataTarget(Paths.get("remote", filenameStore).toFile(), fileLength);
+                fileService.setDataTarget(Paths.get("remote", filenameStore).toFile());
+                fileService.setExpectedDataLength(fileLength);
                 ServerCommandService.sendMsg("STORE-RESP OK", channel);
 //                state = ClientHandler.State.AWAITING_DATA;
                 break;

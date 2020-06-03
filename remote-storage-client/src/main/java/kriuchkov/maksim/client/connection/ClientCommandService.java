@@ -33,7 +33,7 @@ class ClientCommandService extends CommandService {
 
             case "FETCH-RESP":
                 if (!split[1].split(" ")[0].equals("OK")) {
-                    fileService.setDataTarget(null, 0);
+                    fileService.setDataTarget(null);
                 } else {
                     fileService.setExpectedDataLength(Long.parseLong(split[1].split(" ")[1]));
                 }

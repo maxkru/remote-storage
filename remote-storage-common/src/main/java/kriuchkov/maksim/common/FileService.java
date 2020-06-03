@@ -39,7 +39,7 @@ public class FileService implements Closeable {
 
     protected final byte[] buffer = new byte[Protocol.MAX_FRAME_BODY_LENGTH];
 
-    public void setDataTarget(File dataTarget, long length) throws FileNotFoundException {
+    public void setDataTarget(File dataTarget) throws FileNotFoundException {
         if (fos != null) {
             try {
                 fos.close();
@@ -48,7 +48,6 @@ public class FileService implements Closeable {
             }
         }
         this.dataTarget = dataTarget;
-        this.length = length;
         if (dataTarget != null)
             this.fos = new FileOutputStream(dataTarget);
     }

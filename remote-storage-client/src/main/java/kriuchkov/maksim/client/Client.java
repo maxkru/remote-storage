@@ -25,6 +25,7 @@ public class Client extends Application {
         stage.show();
     }
 
+
     static void setRoot(String fxml) throws IOException {
         scene.setRoot(loadFXML(fxml));
     }
@@ -35,7 +36,7 @@ public class Client extends Application {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        MainService.getInstance().launchNetwork(SERVER_IP_ADDRESS, SERVER_PORT);
+        MainService.getInstance().connect(SERVER_IP_ADDRESS, SERVER_PORT);
         launch();
     }
 }
