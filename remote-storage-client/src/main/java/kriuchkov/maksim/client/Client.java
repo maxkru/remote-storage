@@ -21,6 +21,7 @@ public class Client extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(Client.class.getResource("mainWindow.fxml"));
         scene = new Scene(fxmlLoader.load());
         MainWindowController controller = fxmlLoader.getController();
+        controller.init();
         stage.setScene(scene);
         stage.show();
     }

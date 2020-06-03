@@ -23,6 +23,7 @@ public class MainWindowController {
     public ListView<String> remoteFolderListView;
     public ListView<String> localFolderListView;
 
+    private final Path localFolder = Paths.get("local");
     
     @FXML
     private void storeButtonPress() throws Exception {
@@ -32,5 +33,21 @@ public class MainWindowController {
     @FXML
     private void fetchButtonPress() throws IOException {
 //        mainService.fetch();
+    }
+
+    void init() throws IOException {
+        // получить списки файлов
+
+        // на сервере
+        // Runnable updateList = ...???
+        mainService.list();
+
+        // на клиенте
+        List<String> list = Files.list(localFolder)
+                .filter(Files::isRegularFile)
+                .map(path -> path.getName(path.getNameCount() - 1).toString())
+                .collect(Collectors.toList());
+        Platform.runLater( () ->
+                localFolderListView.setItems(FXCollections.observableList(list)) );
     }
 }
