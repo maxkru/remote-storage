@@ -3,14 +3,13 @@ package kriuchkov.maksim.client;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import kriuchkov.maksim.client.connection.MainService;
 
 import java.io.IOException;
 
 public class MainWindowController {
 
-    private NetworkHandler networkHandler = NetworkHandler.getInstance();
     private MainService mainService = MainService.getInstance();
-
 
     public Button fetchButton;
     public Button storeButton;

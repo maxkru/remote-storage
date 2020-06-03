@@ -3,7 +3,6 @@ package kriuchkov.maksim.common;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.stream.ChunkedNioFile;
 
 import java.io.*;
@@ -12,7 +11,7 @@ public class FileService implements Closeable {
 
     protected static final int FILE_CHUNK_SIZE = Protocol.MAX_FRAME_BODY_LENGTH / 2;
 
-    public static void sendFile(File file, Channel channel, ChannelFutureListener finishListener) throws Exception {
+    public static void sendFile(File file, Channel channel, Runnable callback) throws Exception {
         ChunkedNioFile chunkedNioFile = null;
         try {
             chunkedNioFile = new ChunkedNioFile(file, FILE_CHUNK_SIZE);
@@ -20,6 +19,10 @@ public class FileService implements Closeable {
             while (!chunkedNioFile.isEndOfInput()) {
                 ByteBuf next = chunkedNioFile.readChunk(ByteBufAllocator.DEFAULT);
                 channel.writeAndFlush(next);
+            }
+
+            if (callback != null) {
+                callback.run();
             }
         } finally {
             if (chunkedNioFile != null)

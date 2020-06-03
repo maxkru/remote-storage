@@ -1,10 +1,11 @@
-package kriuchkov.maksim.client;
+package kriuchkov.maksim.client.connection;
 
 import kriuchkov.maksim.common.CommandService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
+import java.util.concurrent.CountDownLatch;
 
 public class MainService {
 
@@ -17,6 +18,26 @@ public class MainService {
     private NetworkHandler networkHandler = NetworkHandler.getInstance();
     private ClientCommandService commandService = ClientCommandService.getInstance();
     private ClientFileService fileService = ClientFileService.getInstance();
+
+    public void launchNetwork(String serverAddress, int serverPort) {
+        CountDownLatch latch = new CountDownLatch(1);
+        new Thread(() -> {
+            try {
+                networkHandler.launch(latch, serverAddress, serverPort, new IncomingDataReader());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        }).start();
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void stopNetwork() {
+        networkHandler.stop();
+    }
 
     public void fetch(String fileName) throws FileNotFoundException {
         File file = Paths.get("local", fileName).toFile();

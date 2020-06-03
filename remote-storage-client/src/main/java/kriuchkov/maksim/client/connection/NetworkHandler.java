@@ -1,4 +1,4 @@
-package kriuchkov.maksim.client;
+package kriuchkov.maksim.client.connection;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -15,7 +15,7 @@ import kriuchkov.maksim.common.Protocol;
 
 import java.util.concurrent.CountDownLatch;
 
-public class NetworkHandler {
+class NetworkHandler {
     private Channel channel;
     private IncomingDataReader incomingDataReader;
 
@@ -59,6 +59,10 @@ public class NetworkHandler {
         } finally {
             group.shutdownGracefully().sync();
         }
+    }
+
+    public void stop() {
+        // TODO: break connection somehow
     }
 
     public Channel getChannel() {

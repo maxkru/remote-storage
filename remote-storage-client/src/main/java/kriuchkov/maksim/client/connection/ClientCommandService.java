@@ -1,9 +1,9 @@
-package kriuchkov.maksim.client;
+package kriuchkov.maksim.client.connection;
 
 import io.netty.channel.Channel;
 import kriuchkov.maksim.common.CommandService;
 
-public class ClientCommandService extends CommandService {
+class ClientCommandService extends CommandService {
 
     private static final ClientCommandService instance = new ClientCommandService();
 
@@ -43,7 +43,7 @@ public class ClientCommandService extends CommandService {
                 if (!split[1].split(" ")[0].equals("OK")) {
                     fileService.setDataSource(null);
                 } else {
-                    fileService.doStore();
+                    fileService.doStore(null);
                 }
                 break;
 

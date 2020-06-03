@@ -1,10 +1,10 @@
-package kriuchkov.maksim.client;
+package kriuchkov.maksim.client.connection;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
-public class IncomingDataReader extends ChannelInboundHandlerAdapter {
+class IncomingDataReader extends ChannelInboundHandlerAdapter {
 
     public IncomingDataReader() {
 

@@ -5,9 +5,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import kriuchkov.maksim.client.connection.MainService;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
 
 public class Client extends Application {
 
@@ -15,8 +15,6 @@ public class Client extends Application {
     static final int SERVER_PORT = 8189;
 
     private static Scene scene;
-
-    private static final NetworkHandler networkHandler = NetworkHandler.getInstance();
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -37,15 +35,7 @@ public class Client extends Application {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        new Thread(() -> {
-            try {
-                networkHandler.launch(latch, SERVER_IP_ADDRESS, SERVER_PORT, new IncomingDataReader());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        }).start();
-        latch.await();
+        MainService.getInstance().launchNetwork(SERVER_IP_ADDRESS, SERVER_PORT);
         launch();
     }
 }
