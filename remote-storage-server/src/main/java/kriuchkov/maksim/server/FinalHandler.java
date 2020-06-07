@@ -11,7 +11,6 @@ public class FinalHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LogManager.getLogger(FinalHandler.class);
 
-    private String username = "guest";
     private ServerFileService fileService;
     private ServerCommandService commandService;
 

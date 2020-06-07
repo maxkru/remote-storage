@@ -41,6 +41,7 @@ public class MainService {
             e.printStackTrace();
         }
         connected = true;
+        CommandService.sendMsg("AUTH login password", networkHandler.getChannel());
     }
 
     public void disconnect() {
