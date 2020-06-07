@@ -1,7 +1,10 @@
 package kriuchkov.maksim.client.connection;
 
-import io.netty.channel.Channel;
 import kriuchkov.maksim.common.CommandService;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
 
 class ClientCommandService extends CommandService {
 
@@ -11,17 +14,11 @@ class ClientCommandService extends CommandService {
         return instance;
     }
 
-    private NetworkHandler networkHandler = NetworkHandler.getInstance();
-    private ClientFileService fileService = ClientFileService.getInstance();
-
     private String expectedResponse = null;
 
-    private Runnable storeSuccess;
-    private Runnable storeFailure;
-    private Runnable fetchSuccess;
-    private Runnable fetchFailure;
+    private Consumer<List<String>> listDataConsumer;
 
-    public void parseAndExecute(String input, Channel channel) throws Exception {
+    public void parseAndExecute(String input) throws Exception {
         String[] split = input.split("[\\s\n]", 2);
         String command = split[0];
 
@@ -34,21 +31,31 @@ class ClientCommandService extends CommandService {
 
             case "LIST-RESP":
                 String[] fileNames = split[1].split("\n");
+                listDataConsumer.accept(Arrays.asList(fileNames));
                 break;
 
             case "FETCH-RESP":
                 if (!split[1].split(" ")[0].equals("OK")) {
-                    fileService.setDataTarget(null);
+                    ClientFileService.getInstance().setDataTarget(null);
+                    MainService.getInstance().getFetchFailure().accept("Fetch failed. Server response: " + split[1]);
                 } else {
-                    fileService.setExpectedDataLength(Long.parseLong(split[1].split(" ")[1]));
+                    ClientFileService.getInstance().setExpectedDataLength(Long.parseLong(split[1].split(" ")[2]));
                 }
                 break;
 
             case "STORE-RESP":
                 if (!split[1].split(" ")[0].equals("OK")) {
-                    fileService.setDataSource(null);
+                    ClientFileService.getInstance().setDataSource(null);
+                    MainService.getInstance().getStoreFailure().accept("Store failed. Server response: " + split[1]);
                 } else {
-                    fileService.doStore(null);
+                    logger.debug("About to call doStore()");
+                    logger.debug("fileService = " + ClientFileService.getInstance().toString());
+                    if (MainService.getInstance() != null)
+                        logger.debug("mainService = " + MainService.getInstance().toString());
+                    else
+                        logger.debug("mainService = null");
+                    logger.debug("storeSuccess = " + MainService.getInstance().getStoreSuccess());
+                    ClientFileService.getInstance().doStore(MainService.getInstance().getStoreSuccess());
                 }
                 break;
 
@@ -70,4 +77,7 @@ class ClientCommandService extends CommandService {
         }
     }
 
+    public void setListDataConsumer(Consumer<List<String>> listDataConsumer) {
+        this.listDataConsumer = listDataConsumer;
+    }
 }

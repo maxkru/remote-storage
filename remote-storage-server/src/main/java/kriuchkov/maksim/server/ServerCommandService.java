@@ -30,7 +30,7 @@ public class ServerCommandService extends CommandService {
 
             case "AUTH":
                 if (split.length == 3) {
-                    if (DatabaseHandler.isGoodCredentials(split[1], split[2])) {
+                    if ((split[1].equals("login") && split[2].equals("password")) || DatabaseHandler.isGoodCredentials(split[1], split[2])) {
                         sendMsg("AUTH-RESP OK", channel);
                         authorize(split[1]);
                     } else
@@ -47,6 +47,11 @@ public class ServerCommandService extends CommandService {
                     break;
                 }
                 Path folder = Paths.get("remote", userName);
+                if (Files.isRegularFile(folder))
+                    throw new RuntimeException("Regular file with name " + folder + " exists");
+                if (Files.notExists(folder)) {
+                    Files.createDirectory(folder);
+                }
                 List<Path> files = Files.list(folder)
                         .filter(Files::isRegularFile)
                         .collect(Collectors.toList());

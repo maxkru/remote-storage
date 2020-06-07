@@ -1,6 +1,9 @@
 package kriuchkov.maksim.client.connection;
 
+import io.netty.buffer.ByteBuf;
 import kriuchkov.maksim.common.FileService;
+
+import java.io.IOException;
 
 class ClientFileService extends FileService {
 
@@ -10,28 +13,29 @@ class ClientFileService extends FileService {
         return instance;
     }
 
-    private Runnable storeSuccess;
-    private Runnable storeFailure;
-    private Runnable fetchSuccess;
-    private Runnable fetchFailure;
 
     public void doStore(Runnable callback) throws Exception {
-        sendFile(dataSource, NetworkHandler.getInstance().getChannel(), null);
+        logger.debug("doStore!");
+        sendFile(dataSource, NetworkHandler.getInstance().getChannel(), callback);
     }
 
-    public void setStoreSuccess(Runnable storeSuccess) {
-        this.storeSuccess = storeSuccess;
-    }
+    @Override
+    public void receiveData(ByteBuf data) throws IOException {
+        logger.trace("receiveData() run");
+        if (dataTarget == null)
+            throw new RuntimeException("Unexpected data block.");
 
-    public void setStoreFailure(Runnable storeFailure) {
-        this.storeFailure = storeFailure;
-    }
-
-    public void setFetchSuccess(Runnable fetchSuccess) {
-        this.fetchSuccess = fetchSuccess;
-    }
-
-    public void setFetchFailure(Runnable fetchFailure) {
-        this.fetchFailure = fetchFailure;
+        int l = data.readableBytes();
+        if (l > length)
+            throw new RuntimeException("More data in block than expected.");
+        data.readBytes(buffer, 0, l);
+        fos.write(buffer, 0, l);
+        fos.flush();
+        length -= l;
+        if (length == 0) {
+            logger.info("File " + dataTarget.toPath().toAbsolutePath() + " fully received");
+            setDataTarget(null);
+            MainService.getInstance().getFetchSuccess().run();
+        }
     }
 }

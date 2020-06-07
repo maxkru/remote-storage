@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.ListView;
 import kriuchkov.maksim.client.connection.MainService;
 
@@ -12,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class MainWindowController {
@@ -26,29 +28,57 @@ public class MainWindowController {
     private final Path localFolder = Paths.get("..", "local");
 
 
-    private final Runnable storeSuccess = () -> {
+    private final Runnable storeSuccess = () -> Platform.runLater( () ->
+    {
+        try {
+            updateLists();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    });
 
+    private final Consumer<String> storeFailure = (msg) -> {
+        Platform.runLater( () ->
+                showDialog(msg));
+        Platform.runLater( () ->
+        {
+            try {
+                updateLists();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     };
 
-    private final Runnable storeFailure = () -> {
+    private final Runnable fetchSuccess = () -> Platform.runLater( () ->
+    {
+        try {
+            updateLists();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    });
 
+    private final Consumer<String> fetchFailure = (msg) -> {
+        Platform.runLater( () ->
+                showDialog(msg));
+        Platform.runLater( () ->
+        {
+            try {
+                updateLists();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     };
 
-    private final Runnable fetchSuccess = () -> {
-
-    };
-
-    private final Runnable fetchFailure = () -> {
-
-    };
-
-    private final Runnable updateSuccess = () -> {
-
-    };
-
-    private final Runnable updateFailure = () -> {
-
-    };
+//    private final Runnable updateSuccess = () -> {
+//
+//    };
+//
+//    private final Consumer<String> updateFailure = () -> {
+//
+//    };
     
     @FXML
     private void storeButtonPress() throws Exception {
@@ -63,11 +93,16 @@ public class MainWindowController {
     }
 
     void init() throws IOException {
+        updateLists();
+    }
+
+    void updateLists() throws IOException {
         // получить списки файлов
 
         // на сервере
-        // Runnable updateList = ...???
-        mainService.list();
+        mainService.list( (list) ->
+                Platform.runLater( () ->
+                        remoteFolderListView.setItems(FXCollections.observableList(list))));
 
         // на клиенте
         List<String> list = Files.list(localFolder)
@@ -76,5 +111,11 @@ public class MainWindowController {
                 .collect(Collectors.toList());
         Platform.runLater( () ->
                 localFolderListView.setItems(FXCollections.observableList(list)) );
+    }
+
+    private void showDialog(String msg) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setContentText(msg);
+        dialog.show();
     }
 }

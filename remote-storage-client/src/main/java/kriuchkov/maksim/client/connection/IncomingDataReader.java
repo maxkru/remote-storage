@@ -19,7 +19,7 @@ class IncomingDataReader extends ChannelInboundHandlerAdapter {
         if (msg instanceof String) {
             logger.debug("Message received");
             String command = (String) msg;
-            ClientCommandService.getInstance().parseAndExecute(command, ctx.channel());
+            ClientCommandService.getInstance().parseAndExecute(command);
         } else {
             logger.debug("Data received");
             ByteBuf data = (ByteBuf) msg;

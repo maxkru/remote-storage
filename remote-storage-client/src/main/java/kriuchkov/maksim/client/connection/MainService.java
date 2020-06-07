@@ -7,7 +7,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 public class MainService {
 
@@ -41,6 +43,7 @@ public class MainService {
             e.printStackTrace();
         }
         connected = true;
+        commandService.expectResponse("AUTH-RESP");
         CommandService.sendMsg("AUTH login password", networkHandler.getChannel());
     }
 
@@ -49,12 +52,14 @@ public class MainService {
         connected = false;
     }
 
-    public void fetch(String fileName, Runnable successCallback, Runnable failureCallback) throws FileNotFoundException {
+    public void fetch(String fileName, Runnable successCallback, Consumer<String> failureCallback) throws FileNotFoundException {
         checkConnection();
         File file = Paths.get("local", fileName).toFile();
         if (file.exists())
             file.delete();
-//        fileService.setDataTarget(file);
+        setFetchSuccess(successCallback);
+        setFetchFailure(failureCallback);
+        fileService.setDataTarget(file);
         commandService.expectResponse("FETCH-RESP");
         CommandService.sendMsg("FETCH " + file.getName(), networkHandler.getChannel());
     }
@@ -64,11 +69,13 @@ public class MainService {
             throw new IllegalStateException("Not connected");
     }
 
-    public void store(String fileName, Runnable successCallback, Runnable failureCallback) throws FileNotFoundException {
+    public void store(String fileName, Runnable successCallback, Consumer<String> failureCallback) throws FileNotFoundException {
         checkConnection();
         File file = Paths.get("local", fileName).toFile();
         if (!file.exists())
             throw new FileNotFoundException("Attempted to store a non-existing file: " + file.toString());
+        setStoreSuccess(successCallback);
+        setStoreFailure(failureCallback);
         fileService.setDataSource(file);
         commandService.expectResponse("STORE-RESP");
         ClientCommandService.sendMsg("STORE " + file.getName() + " " + file.length(), networkHandler.getChannel());
@@ -87,10 +94,49 @@ public class MainService {
         ClientCommandService.sendMsg("RENAME " + fileName, networkHandler.getChannel());
     }
 
-    public void list() {
+    public void list(Consumer<List<String>> consumer) {
         checkConnection();
         commandService.expectResponse("LIST-RESP");
+        commandService.setListDataConsumer(consumer);
         ClientCommandService.sendMsg("LIST", networkHandler.getChannel());
     }
+
+    private Runnable storeSuccess;
+    private Consumer<String> storeFailure;
+    private Runnable fetchSuccess;
+    private Consumer<String> fetchFailure;
+
+    public void setStoreSuccess(Runnable storeSuccess) {
+        this.storeSuccess = storeSuccess;
+    }
+
+    public void setStoreFailure(Consumer<String> storeFailure) {
+        this.storeFailure = storeFailure;
+    }
+
+    public void setFetchSuccess(Runnable fetchSuccess) {
+        this.fetchSuccess = fetchSuccess;
+    }
+
+    public void setFetchFailure(Consumer<String> fetchFailure) {
+        this.fetchFailure = fetchFailure;
+    }
+
+    public Runnable getStoreSuccess() {
+        return storeSuccess;
+    }
+
+    public Consumer<String> getStoreFailure() {
+        return storeFailure;
+    }
+
+    public Runnable getFetchSuccess() {
+        return fetchSuccess;
+    }
+
+    public Consumer<String> getFetchFailure() {
+        return fetchFailure;
+    }
+
 
 }
