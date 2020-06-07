@@ -25,7 +25,7 @@ public class MainWindowController {
     public ListView<String> remoteFolderListView;
     public ListView<String> localFolderListView;
 
-    private final Path localFolder = Paths.get("..", "local");
+    private final Path localFolder = Paths.get("local");
 
 
     private final Runnable storeSuccess = () -> Platform.runLater( () ->

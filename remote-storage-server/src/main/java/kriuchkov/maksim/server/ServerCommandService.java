@@ -16,10 +16,12 @@ public class ServerCommandService extends CommandService {
     private ServerFileService fileService;
 
     private String userName;
+    private Path workingDirectory;
 
     public ServerCommandService(ServerFileService fileService) {
         this.fileService = fileService;
         this.userName = null;
+        this.workingDirectory = null;
     }
 
     public void parseAndExecute(String input, Channel channel) throws Exception {
@@ -46,13 +48,12 @@ public class ServerCommandService extends CommandService {
                     sendMsg("LIST-RESP AUTH-REQUIRED", channel);
                     break;
                 }
-                Path folder = Paths.get("remote", userName);
-                if (Files.isRegularFile(folder))
-                    throw new RuntimeException("Regular file with name " + folder + " exists");
-                if (Files.notExists(folder)) {
-                    Files.createDirectory(folder);
+                if (Files.isRegularFile(workingDirectory))
+                    throw new RuntimeException("Regular file with name " + workingDirectory + " exists");
+                if (Files.notExists(workingDirectory)) {
+                    Files.createDirectory(workingDirectory);
                 }
-                List<Path> files = Files.list(folder)
+                List<Path> files = Files.list(workingDirectory)
                         .filter(Files::isRegularFile)
                         .collect(Collectors.toList());
                 StringBuilder sb = new StringBuilder("LIST-RESP\n");
@@ -67,7 +68,7 @@ public class ServerCommandService extends CommandService {
                     break;
                 }
                 String filenameFetch = input.split(" ", 2)[1];
-                Path pathFetch = Paths.get("remote", userName, filenameFetch);
+                Path pathFetch = workingDirectory.resolve(filenameFetch);
                 if (Files.notExists(pathFetch)) {
                     ServerCommandService.sendMsg("FETCH-RESP NOT-FOUND", channel);
                 } else {
@@ -91,7 +92,7 @@ public class ServerCommandService extends CommandService {
                     ServerCommandService.sendMsg("SYNTAX-ERROR", channel);
                     break;
                 }
-                fileService.setDataTarget(Paths.get("remote", userName, filenameStore).toFile());
+                fileService.setDataTarget(workingDirectory.resolve(filenameStore).toFile());
                 fileService.setExpectedDataLength(fileLength);
                 ServerCommandService.sendMsg("STORE-RESP OK", channel);
                 break;
@@ -102,7 +103,7 @@ public class ServerCommandService extends CommandService {
                     break;
                 }
                 String filenameRemove = input.split(" ", 2)[1];
-                Path pathRemove = Paths.get("remote", userName, filenameRemove);
+                Path pathRemove = workingDirectory.resolve(filenameRemove);
                 if (Files.notExists(pathRemove)) {
                     ServerCommandService.sendMsg("REMOVE-RESP NOT-FOUND", channel);
                 } else {
@@ -115,6 +116,7 @@ public class ServerCommandService extends CommandService {
 
     private void authorize(String login) {
         userName = login;
+        workingDirectory = Paths.get("remote", userName);
     }
 
     private boolean isAuthorized() {
