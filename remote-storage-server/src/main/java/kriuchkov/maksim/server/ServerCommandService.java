@@ -32,7 +32,7 @@ public class ServerCommandService extends CommandService {
 
             case "AUTH":
                 if (split.length == 3) {
-                    if ((split[1].equals("login") && split[2].equals("password")) || DatabaseHandler.isGoodCredentials(split[1], split[2])) {
+                    if (DatabaseHandler.isGoodCredentials(split[1], split[2])) {
                         sendMsg("AUTH-RESP OK", channel);
                         authorize(split[1]);
                     } else

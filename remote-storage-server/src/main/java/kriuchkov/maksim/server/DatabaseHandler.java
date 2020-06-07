@@ -18,7 +18,7 @@ public class DatabaseHandler {
             logger.info("Connecting to database");
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection("jdbc:mysql://localhost/remote_storage?" +
-                    "user=remote-storage&password=XgVbEF4vTzP!R&serverTimezone=Europe/Moscow");
+                    "user=remote-storage&password=XgVbEF4vTzP!&serverTimezone=Europe/Moscow");
             stmt = connection.createStatement();
             logger.info("Connection to database established");
         } catch (Exception e) {
