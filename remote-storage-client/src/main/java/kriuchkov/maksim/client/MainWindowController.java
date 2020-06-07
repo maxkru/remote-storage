@@ -23,16 +23,43 @@ public class MainWindowController {
     public ListView<String> remoteFolderListView;
     public ListView<String> localFolderListView;
 
-    private final Path localFolder = Paths.get("local");
+    private final Path localFolder = Paths.get("..", "local");
+
+
+    private final Runnable storeSuccess = () -> {
+
+    };
+
+    private final Runnable storeFailure = () -> {
+
+    };
+
+    private final Runnable fetchSuccess = () -> {
+
+    };
+
+    private final Runnable fetchFailure = () -> {
+
+    };
+
+    private final Runnable updateSuccess = () -> {
+
+    };
+
+    private final Runnable updateFailure = () -> {
+
+    };
     
     @FXML
     private void storeButtonPress() throws Exception {
-//        mainService.store();
+        String fileName = localFolderListView.getSelectionModel().getSelectedItem();
+        mainService.store(fileName, storeSuccess, storeFailure);
     }
 
     @FXML
     private void fetchButtonPress() throws IOException {
-//        mainService.fetch();
+        String fileName = remoteFolderListView.getSelectionModel().getSelectedItem();
+        mainService.fetch(fileName, fetchSuccess, fetchFailure);
     }
 
     void init() throws IOException {

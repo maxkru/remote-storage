@@ -1,6 +1,8 @@
 package kriuchkov.maksim.client.connection;
 
 import kriuchkov.maksim.common.CommandService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,14 +17,17 @@ public class MainService {
         return instance;
     }
 
+    private static final Logger logger = LogManager.getLogger(MainService.class);
+
     private NetworkHandler networkHandler = NetworkHandler.getInstance();
     private ClientCommandService commandService = ClientCommandService.getInstance();
     private ClientFileService fileService = ClientFileService.getInstance();
 
     private boolean connected = false;
 
-    public void connect(String serverAddress, int serverPort) {
+    public void connect(String serverAddress, int serverPort) { ;
         CountDownLatch latch = new CountDownLatch(1);
+        logger.debug("Invoking networkHandler.launch()");
         new Thread(() -> {
             try {
                 networkHandler.launch(latch, serverAddress, serverPort, new IncomingDataReader());
@@ -43,12 +48,12 @@ public class MainService {
         connected = false;
     }
 
-    public void fetch(String fileName) throws FileNotFoundException {
+    public void fetch(String fileName, Runnable successCallback, Runnable failureCallback) throws FileNotFoundException {
         checkConnection();
         File file = Paths.get("local", fileName).toFile();
         if (file.exists())
             file.delete();
-        fileService.setDataTarget(file);
+//        fileService.setDataTarget(file);
         commandService.expectResponse("FETCH-RESP");
         CommandService.sendMsg("FETCH " + file.getName(), networkHandler.getChannel());
     }
@@ -58,11 +63,11 @@ public class MainService {
             throw new IllegalStateException("Not connected");
     }
 
-    public void store(String fileName) throws FileNotFoundException {
+    public void store(String fileName, Runnable successCallback, Runnable failureCallback) throws FileNotFoundException {
         checkConnection();
         File file = Paths.get("local", fileName).toFile();
         if (!file.exists())
-            throw new FileNotFoundException("Attempted to store an non-existing file.");
+            throw new FileNotFoundException("Attempted to store a non-existing file: " + file.toString());
         fileService.setDataSource(file);
         commandService.expectResponse("STORE-RESP");
         ClientCommandService.sendMsg("STORE " + file.getName() + " " + file.length(), networkHandler.getChannel());

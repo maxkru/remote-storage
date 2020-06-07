@@ -16,8 +16,13 @@ class ClientCommandService extends CommandService {
 
     private String expectedResponse = null;
 
+    private Runnable storeSuccess;
+    private Runnable storeFailure;
+    private Runnable fetchSuccess;
+    private Runnable fetchFailure;
+
     public void parseAndExecute(String input, Channel channel) throws Exception {
-        String[] split = input.split(" ", 2);
+        String[] split = input.split("[\\s\n]", 2);
         String command = split[0];
 
         assertResponseExpected(command);
@@ -54,11 +59,15 @@ class ClientCommandService extends CommandService {
     }
 
     public void expectResponse(String s) {
+        logger.debug("expecting server response " + s);
         expectedResponse = s;
     }
 
     public void assertResponseExpected(String response) {
-        if (!response.equals(expectedResponse))
+        if (!response.equals(expectedResponse)) {
+            logger.error("Received an unexpected response from server: " + response);
             throw new RuntimeException("Unexpected response from server: " + response);
+        }
     }
+
 }

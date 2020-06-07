@@ -3,8 +3,12 @@ package kriuchkov.maksim.client.connection;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 class IncomingDataReader extends ChannelInboundHandlerAdapter {
+
+    private static final Logger logger = LogManager.getLogger(IncomingDataReader.class);
 
     public IncomingDataReader() {
 
@@ -12,12 +16,12 @@ class IncomingDataReader extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        System.out.println("channelRead");
-
         if (msg instanceof String) {
+            logger.debug("Message received");
             String command = (String) msg;
             ClientCommandService.getInstance().parseAndExecute(command, ctx.channel());
         } else {
+            logger.debug("Data received");
             ByteBuf data = (ByteBuf) msg;
             ClientFileService.getInstance().receiveData(data);
         }
@@ -25,7 +29,7 @@ class IncomingDataReader extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        cause.printStackTrace();
+        logger.catching(cause);
         ctx.close();
     }
 }

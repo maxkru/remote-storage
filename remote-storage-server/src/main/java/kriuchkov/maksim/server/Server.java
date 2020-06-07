@@ -11,14 +11,19 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import kriuchkov.maksim.common.MessageTypeDecoder;
 import kriuchkov.maksim.common.OutboundMessageSplitter;
 import kriuchkov.maksim.common.Protocol;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Server {
+
+    private static Logger logger = LogManager.getLogger(Server.class);
 
     public Server() {
 
     }
 
     public void launch(int port) throws Throwable {
+        logger.info("Starting server on port " + port);
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
@@ -27,7 +32,7 @@ public class Server {
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        protected void initChannel(SocketChannel socketChannel) {
                             // out
                             socketChannel.pipeline().addLast(new OutboundMessageSplitter());
 
@@ -38,8 +43,10 @@ public class Server {
                         }
                     });
             ChannelFuture future = bootstrap.bind(port).sync();
+            logger.info("Server started on port " + port);
             future.channel().closeFuture().sync();
         } finally {
+            logger.info("Shutting down server");
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
         }

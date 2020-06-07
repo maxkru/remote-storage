@@ -12,12 +12,16 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import kriuchkov.maksim.common.MessageTypeDecoder;
 import kriuchkov.maksim.common.OutboundMessageSplitter;
 import kriuchkov.maksim.common.Protocol;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CountDownLatch;
 
 class NetworkHandler {
     private Channel channel;
     private IncomingDataReader incomingDataReader;
+
+    private static final Logger logger = LogManager.getLogger(NetworkHandler.class);
 
 
     private static NetworkHandler instance = new NetworkHandler();
@@ -31,6 +35,8 @@ class NetworkHandler {
     }
 
     public void launch(CountDownLatch countDownLatch, String address, int port, IncomingDataReader incomingDataReader) throws Throwable {
+        logger.info("Connecting to " + address + ":" + port);
+
         this.incomingDataReader = incomingDataReader;
 
         EventLoopGroup group = new NioEventLoopGroup();
@@ -55,13 +61,16 @@ class NetworkHandler {
                     });
             ChannelFuture future = bootstrap.connect().sync();
             countDownLatch.countDown();
+            logger.info("Connection to " + address + ":" + port + " established");
             future.channel().closeFuture().sync();
         } finally {
+            logger.info("Disconnecting from " + address + ":" + port);
             group.shutdownGracefully().sync();
         }
     }
 
     public void stop() {
+        logger.info("Asked to stop.");
         // TODO: break connection somehow
     }
 

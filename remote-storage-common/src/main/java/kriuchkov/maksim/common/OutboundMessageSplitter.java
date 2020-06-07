@@ -4,16 +4,21 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class OutboundMessageSplitter extends MessageToMessageEncoder<Object> {
 
+    private static Logger logger = LogManager.getLogger(OutboundMessageSplitter.class);
+
     @Override
     protected void encode(ChannelHandlerContext ctx, Object o, List<Object> out) throws Exception {
         if (o instanceof String) {
             String msg = (String) o;
+            logger.debug("Encoding and passing a string: " + msg);
             ByteBuf byteBuf;
 
             byte[] msgBytes = msg.getBytes(StandardCharsets.UTF_8);
@@ -29,6 +34,7 @@ public class OutboundMessageSplitter extends MessageToMessageEncoder<Object> {
             ctx.writeAndFlush(byteBuf);
         } else {
             ByteBuf in = (ByteBuf) o;
+            logger.debug("Encoding and passing a ByteBuf, readableBytes = " + in.readableBytes());
             sendSplitDataFrames(in, out);
         }
     }
@@ -44,7 +50,7 @@ public class OutboundMessageSplitter extends MessageToMessageEncoder<Object> {
                 out.add(outFrame);
             }
         } finally {
-            in.release();
+//            in.release();
         }
     }
 
