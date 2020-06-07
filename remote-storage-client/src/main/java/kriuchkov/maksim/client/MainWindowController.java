@@ -3,8 +3,8 @@ package kriuchkov.maksim.client;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.ListView;
 import kriuchkov.maksim.client.connection.MainService;
 
@@ -20,6 +20,7 @@ public class MainWindowController {
 
     private MainService mainService = MainService.getInstance();
 
+    public Button deleteButton;
     public Button fetchButton;
     public Button storeButton;
     public ListView<String> remoteFolderListView;
@@ -39,7 +40,7 @@ public class MainWindowController {
 
     private final Consumer<String> storeFailure = (msg) -> {
         Platform.runLater( () ->
-                showDialog(msg));
+                showErrorAlert(msg));
         Platform.runLater( () ->
         {
             try {
@@ -61,7 +62,29 @@ public class MainWindowController {
 
     private final Consumer<String> fetchFailure = (msg) -> {
         Platform.runLater( () ->
-                showDialog(msg));
+                showErrorAlert(msg));
+        Platform.runLater( () ->
+        {
+            try {
+                updateLists();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    };
+
+    private final Runnable deleteSuccess = () -> Platform.runLater( () ->
+    {
+        try {
+            updateLists();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    });
+
+    private final Consumer<String> deleteFailure = (msg) -> {
+        Platform.runLater( () ->
+                showErrorAlert(msg));
         Platform.runLater( () ->
         {
             try {
@@ -83,12 +106,16 @@ public class MainWindowController {
     @FXML
     private void storeButtonPress() throws Exception {
         String fileName = localFolderListView.getSelectionModel().getSelectedItem();
+        if (fileName == null || fileName.isEmpty())
+            return;
         mainService.store(fileName, storeSuccess, storeFailure);
     }
 
     @FXML
     private void fetchButtonPress() throws IOException {
         String fileName = remoteFolderListView.getSelectionModel().getSelectedItem();
+        if (fileName == null || fileName.isEmpty())
+            return;
         mainService.fetch(fileName, fetchSuccess, fetchFailure);
     }
 
@@ -105,6 +132,9 @@ public class MainWindowController {
                         remoteFolderListView.setItems(FXCollections.observableList(list))));
 
         // на клиенте
+        if (Files.notExists(localFolder)) {
+            Files.createDirectory(localFolder);
+        }
         List<String> list = Files.list(localFolder)
                 .filter(Files::isRegularFile)
                 .map(path -> path.getName(path.getNameCount() - 1).toString())
@@ -113,9 +143,16 @@ public class MainWindowController {
                 localFolderListView.setItems(FXCollections.observableList(list)) );
     }
 
-    private void showDialog(String msg) {
-        Dialog<Void> dialog = new Dialog<>();
-        dialog.setContentText(msg);
-        dialog.show();
+    private void showErrorAlert(String msg) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, msg);
+        alert.show();
+    }
+
+    @FXML
+    private void deleteButtonPress() {
+        String fileName = remoteFolderListView.getSelectionModel().getSelectedItem();
+        if (fileName == null || fileName.isEmpty())
+            return;
+        mainService.delete(fileName, deleteSuccess, deleteFailure);
     }
 }

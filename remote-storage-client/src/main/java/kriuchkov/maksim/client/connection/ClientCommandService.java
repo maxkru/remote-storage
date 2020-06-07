@@ -60,7 +60,11 @@ class ClientCommandService extends CommandService {
                 break;
 
             case "REMOVE-RESP":
-                // TODO
+                if (!split[1].equals("OK")) {
+                    MainService.getInstance().getDeleteFailure().accept("Deleting remote file failed. Server response: " + split[1]);
+                } else {
+                    MainService.getInstance().getDeleteSuccess().run();
+                }
                 break;
         }
     }

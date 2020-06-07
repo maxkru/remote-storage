@@ -12,8 +12,9 @@
     </padding>
     <Label text="Remote"/>
     <ListView fx:id="remoteFolderListView"/>
+    <Button fx:id="fetchButton" text="Fetch" onAction="#fetchButtonPress"/>
+    <Button fx:id="deleteButton" text="Delete" onAction="#deleteButtonPress"/>
     <Label text="Local"/>
     <ListView fx:id="localFolderListView"/>
     <Button fx:id="storeButton" text="Store" onAction="#storeButtonPress"/>
-    <Button fx:id="fetchButton" text="Fetch" onAction="#fetchButtonPress"/>
 </VBox>

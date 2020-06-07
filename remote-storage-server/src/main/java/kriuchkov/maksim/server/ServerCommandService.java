@@ -104,7 +104,7 @@ public class ServerCommandService extends CommandService {
                 }
                 String filenameRemove = input.split(" ", 2)[1];
                 Path pathRemove = workingDirectory.resolve(filenameRemove);
-                if (Files.notExists(pathRemove)) {
+                if (filenameRemove.isEmpty() || Files.notExists(pathRemove)) {
                     ServerCommandService.sendMsg("REMOVE-RESP NOT-FOUND", channel);
                 } else {
                     Files.delete(pathRemove);

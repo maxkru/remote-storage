@@ -81,9 +81,11 @@ public class MainService {
         ClientCommandService.sendMsg("STORE " + file.getName() + " " + file.length(), networkHandler.getChannel());
     }
 
-    public void delete(String fileName) {
+    public void delete(String fileName, Runnable successCallback, Consumer<String> failureCallback) {
         checkConnection();
         commandService.expectResponse("REMOVE-RESP");
+        setDeleteSuccess(successCallback);
+        setDeleteFailure(failureCallback);
         ClientCommandService.sendMsg("REMOVE " + fileName, networkHandler.getChannel());
     }
 
@@ -105,6 +107,8 @@ public class MainService {
     private Consumer<String> storeFailure;
     private Runnable fetchSuccess;
     private Consumer<String> fetchFailure;
+    private Runnable deleteSuccess;
+    private Consumer<String> deleteFailure;
 
     public void setStoreSuccess(Runnable storeSuccess) {
         this.storeSuccess = storeSuccess;
@@ -120,6 +124,14 @@ public class MainService {
 
     public void setFetchFailure(Consumer<String> fetchFailure) {
         this.fetchFailure = fetchFailure;
+    }
+
+    public void setDeleteSuccess(Runnable deleteSuccess) {
+        this.deleteSuccess = deleteSuccess;
+    }
+
+    public void setDeleteFailure(Consumer<String> deleteFailure) {
+        this.deleteFailure = deleteFailure;
     }
 
     public Runnable getStoreSuccess() {
@@ -138,5 +150,11 @@ public class MainService {
         return fetchFailure;
     }
 
+    public Runnable getDeleteSuccess() {
+        return deleteSuccess;
+    }
 
+    public Consumer<String> getDeleteFailure() {
+        return deleteFailure;
+    }
 }
