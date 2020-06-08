@@ -3,15 +3,14 @@ package kriuchkov.maksim.client;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import kriuchkov.maksim.client.connection.MainService;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -20,14 +19,19 @@ public class MainWindowController {
 
     private MainService mainService = MainService.getInstance();
 
+    public TextField loginTextField;
+    public PasswordField passwordField;
+    public Button loginButton;
     public Button deleteButton;
     public Button fetchButton;
     public Button storeButton;
     public ListView<String> remoteFolderListView;
     public ListView<String> localFolderListView;
 
-    private final Path localFolder = Paths.get("local");
+    private List<Control> fileControls;
+    private List<Control> loginControls;
 
+    private final Path localFolder = Paths.get("local");
 
     private final Runnable storeSuccess = () -> Platform.runLater( () ->
     {
@@ -95,6 +99,24 @@ public class MainWindowController {
         });
     };
 
+    private final Runnable authSuccess = () -> Platform.runLater( () ->
+    {
+        enableFileControls();
+        disableLoginControls();
+        try {
+            updateLists();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    });
+
+    private final Consumer<String> authFailure = (msg) -> {
+        disableFileControls();
+        enableLoginControls();
+        Platform.runLater( () ->
+                showErrorAlert(msg));
+    };
+
 //    private final Runnable updateSuccess = () -> {
 //
 //    };
@@ -120,7 +142,53 @@ public class MainWindowController {
     }
 
     void init() throws IOException {
-        updateLists();
+        fileControls = new ArrayList<>();
+        fileControls.add(deleteButton);
+        fileControls.add(fetchButton);
+        fileControls.add(storeButton);
+        fileControls.add(remoteFolderListView);
+        fileControls.add(localFolderListView);
+
+        loginControls = new ArrayList<>();
+        loginControls.add(loginTextField);
+        loginControls.add(passwordField);
+        loginControls.add(loginButton);
+
+        if (!MainService.getInstance().getAuthorized()) {
+            disableFileControls();
+        }
+    }
+
+    private void disableFileControls() {
+        Platform.runLater( () -> {
+            for (Control c : fileControls) {
+                c.setDisable(true);
+            }
+        });
+    }
+
+    private void enableFileControls() {
+        Platform.runLater( () -> {
+            for (Control c : fileControls) {
+                c.setDisable(false);
+            }
+        });
+    }
+
+    private void disableLoginControls() {
+        Platform.runLater( () -> {
+            for (Control c : loginControls) {
+                c.setDisable(true);
+            }
+        });
+    }
+
+    private void enableLoginControls() {
+        Platform.runLater( () -> {
+            for (Control c : loginControls) {
+                c.setDisable(false);
+            }
+        });
     }
 
     void updateLists() throws IOException {
@@ -148,11 +216,31 @@ public class MainWindowController {
         alert.show();
     }
 
+    private void showWarningAlert(String msg) {
+        Alert alert = new Alert(Alert.AlertType.WARNING, msg);
+        alert.show();
+    }
+
     @FXML
     private void deleteButtonPress() {
         String fileName = remoteFolderListView.getSelectionModel().getSelectedItem();
         if (fileName == null || fileName.isEmpty())
             return;
         mainService.delete(fileName, deleteSuccess, deleteFailure);
+    }
+
+    @FXML
+    private void loginButtonPress() {
+        String login = loginTextField.getText();
+        if (login.isEmpty()) {
+            showWarningAlert("Enter login");
+            return;
+        }
+        String password = passwordField.getText();
+        if (password.isEmpty()) {
+            showWarningAlert("Enter password");
+            return;
+        }
+        mainService.auth(login, password, authSuccess, authFailure);
     }
 }

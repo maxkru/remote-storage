@@ -26,7 +26,13 @@ class ClientCommandService extends CommandService {
 
         switch (command) {
             case "AUTH-RESP":
-                // TODO
+                if (split[1].equals("OK")) {
+                    MainService.getInstance().setAuthorized(true);
+                    MainService.getInstance().getAuthSuccess().run();
+                } else {
+                    MainService.getInstance().setAuthorized(false);
+                    MainService.getInstance().getAuthFailure().accept("Authorization failed. Server response: " + split[1]);
+                }
                 break;
 
             case "LIST-RESP":

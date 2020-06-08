@@ -26,6 +26,7 @@ public class MainService {
     private ClientFileService fileService = ClientFileService.getInstance();
 
     private boolean connected = false;
+    private boolean authorized = false;
 
     public void connect(String serverAddress, int serverPort) { ;
         CountDownLatch latch = new CountDownLatch(1);
@@ -43,8 +44,6 @@ public class MainService {
             e.printStackTrace();
         }
         connected = true;
-        commandService.expectResponse("AUTH-RESP");
-        CommandService.sendMsg("AUTH login password", networkHandler.getChannel());
     }
 
     public void disconnect() {
@@ -109,6 +108,8 @@ public class MainService {
     private Consumer<String> fetchFailure;
     private Runnable deleteSuccess;
     private Consumer<String> deleteFailure;
+    private Runnable authSuccess;
+    private Consumer<String> AuthFailure;
 
     public void setStoreSuccess(Runnable storeSuccess) {
         this.storeSuccess = storeSuccess;
@@ -134,6 +135,14 @@ public class MainService {
         this.deleteFailure = deleteFailure;
     }
 
+    public void setAuthSuccess(Runnable authSuccess) {
+        this.authSuccess = authSuccess;
+    }
+
+    public void setAuthFailure(Consumer<String> authFailure) {
+        AuthFailure = authFailure;
+    }
+
     public Runnable getStoreSuccess() {
         return storeSuccess;
     }
@@ -156,5 +165,29 @@ public class MainService {
 
     public Consumer<String> getDeleteFailure() {
         return deleteFailure;
+    }
+
+    public Runnable getAuthSuccess() {
+        return authSuccess;
+    }
+
+    public Consumer<String> getAuthFailure() {
+        return AuthFailure;
+    }
+
+    public void auth(String login, String password, Runnable successCallback, Consumer<String> failureCallback) {
+        checkConnection();
+        commandService.expectResponse("AUTH-RESP");
+        setAuthSuccess(successCallback);
+        setAuthFailure(failureCallback);
+        ClientCommandService.sendMsg("AUTH " + login + " " + password, networkHandler.getChannel());
+    }
+
+    public boolean getAuthorized() {
+        return authorized;
+    }
+
+    public void setAuthorized(boolean authorized) {
+        this.authorized = authorized;
     }
 }
