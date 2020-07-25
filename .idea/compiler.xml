@@ -7,8 +7,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="remote-storage-server" />
-        <module name="remote-storage-common" />
         <module name="remote-storage-client" />
+        <module name="remote-storage-common" />
       </profile>
     </annotationProcessing>
   </component>
